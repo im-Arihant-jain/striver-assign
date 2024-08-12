@@ -8,19 +8,18 @@ import { AiFillEdit, AiFillRest, AiOutlinePlus } from "react-icons/ai";
 import { Modal, Form, Input, Button, message } from 'antd';
 
 function App() {
-  const [data, setData] = useState([]);
+  const [dummyData, setDummyData] = useState([
+    { id: 1, ques: "What is 2 + 2?", op1: "3", op2: "4", op3: "5", op4: "6", ans: "4" },
+    { id: 2, ques: "What is 2 + 5?", op1: "3", op2: "4", op3: "5", op4: "7", ans: "7" },
+    { id: 3, ques: "What is the capital of France?", op1: "London", op2: "Berlin", op3: "Paris", op4: "Madrid", ans: "Paris" }
+  ]);
+  
+  const [data, setData] = useState(dummyData);
   const [adminmode, setAdminmode] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editable, setEditable] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(null);
   const [form] = Form.useForm();
-
-  // Dummy data
-  const dummyData = [
-    { id: 1, ques: "What is 2 + 2?", op1: "3", op2: "4", op3: "5", op4: "6", ans: "4" },
-    { id: 2, ques: "What is 2 + 5?", op1: "3", op2: "4", op3: "5", op4: "7", ans: "7" },
-    { id: 3, ques: "What is the capital of France?", op1: "London", op2: "Berlin", op3: "Paris", op4: "Madrid", ans: "Paris" }
-  ];
 
   // Settings for the slider
   let settings = {
@@ -36,7 +35,7 @@ function App() {
       try {
         const res = await axios.get('http://localhost:8080/questions');
         setData(res.data);
-        if(res.data.length==0){
+        if(res.data.length === 0) {
           setData(dummyData);
         }
       } catch (error) {
@@ -46,7 +45,7 @@ function App() {
       }
     };
     fetchData();
-  }, []); 
+  }, [dummyData]); 
 
   useEffect(() => {
     if (editable && currentIndex !== null) {
@@ -71,8 +70,9 @@ function App() {
   const handleDel = async (index) => {
     try {
       if (data === dummyData) {
-        setData(data.filter((_, i) => i !== index)); // Remove item from local dummy data
-        dummyData = data;
+        const updatedDummyData = dummyData.filter((_, i) => i !== index);
+        setData(updatedDummyData); 
+        setDummyData(updatedDummyData); 
       } else {
         await axios.delete(`http://localhost:8080/questions/${data[index].id}`);
         message.success('Question deleted successfully!');
@@ -88,8 +88,9 @@ function App() {
     try {
       if (editable) {
         if (data === dummyData) {
-          setData(data.map((item, index) => index === currentIndex ? { ...item, ...values } : item));
-          dummyData = data;
+          const updatedDummyData = data.map((item, index) => index === currentIndex ? { ...item, ...values } : item);
+          setData(updatedDummyData);
+          setDummyData(updatedDummyData);
         } else {
           await axios.put(`http://localhost:8080/questions/${data[currentIndex].id}`, values);
           message.success('Question updated successfully!');
@@ -97,8 +98,9 @@ function App() {
       } else {
         if (data === dummyData) {
           const newQuestion = { ...values, id: data.length + 1 };
-          setData([...data, newQuestion]);
-          dummyData = data;
+          const updatedDummyData = [...data, newQuestion];
+          setData(updatedDummyData);
+          setDummyData(updatedDummyData);
         } else {
           await axios.post('http://localhost:8080/questions', values);
           message.success('Question added successfully!');
@@ -119,7 +121,7 @@ function App() {
 
   return (
     <>
-      <button className='ml-5 mt-5 font-bold' onClick={() => setAdminmode(!adminmode)}>ADMIN MODE</button>
+      <button className='ml-5 mt-5 font-bold' onClick={() => setAdminmode(!adminmode)}>{adminmode ? 'ADMIN MODE':'USER MODE'}</button>
 
       <div className='w-full h-full'>
         <div className='w-1/2 mt-56 mx-auto bg-black rounded-sm border'>
